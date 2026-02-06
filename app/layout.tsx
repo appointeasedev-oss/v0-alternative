@@ -1,12 +1,9 @@
-import '../styles/globals.css';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-
-const inter = Inter({ subsets: ['latin'] });
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'FreeV - Free Alternative to V0.dev',
-  description: 'A completely free alternative to V0.dev for AI-powered component generation',
+  title: 'FreeV - AI Component Generator',
+  description: 'Generate React components with AI - completely free',
 };
 
 export default function RootLayout({
@@ -16,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }

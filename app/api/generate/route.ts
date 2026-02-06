@@ -1,50 +1,36 @@
-// API route for generating components with multiple AI provider support
-import { NextRequest } from 'next/server';
-import { generateComponent, generatePage } from '@/utils/ai-service';
-import { initializeProvider, getActiveProvider } from '@/config/ai-providers';
+import { NextRequest, NextResponse } from 'next/server';
+import { generateComponent, GenerationRequest, getAvailableProviders } from '@/lib/ai-service';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { prompt, type = 'component', framework = 'react', provider = null } = body;
+    const body: GenerationRequest = await request.json();
+    const { prompt, framework, mode } = body;
 
     if (!prompt) {
-      return new Response(JSON.stringify({ error: 'Prompt is required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
     }
 
-    // Initialize the provider (in a real implementation, this would connect to the selected AI service)
-    const activeProvider = initializeProvider();
-    
-    let result;
-    if (type === 'page') {
-      result = await generatePage(prompt);
-    } else {
-      result = await generateComponent({ prompt, framework, componentType: type });
-    }
+    const result = await generateComponent({ prompt, framework, mode });
 
     if (result.success) {
-      return new Response(JSON.stringify({ 
+      return NextResponse.json({
         code: result.code,
-        provider: activeProvider.name,
-        framework
-      }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        provider: result.provider,
+        length: result.code.length,
       });
     } else {
-      return new Response(JSON.stringify({ error: result.error }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return NextResponse.json({ error: result.error }, { status: 500 });
     }
   } catch (error) {
-    console.error('Error in generate API:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    console.error('Generation error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
+}
+
+export async function GET() {
+  const providers = getAvailableProviders();
+  return NextResponse.json({
+    providers,
+    hasApiKeys: providers.length > 0,
+  });
 }
